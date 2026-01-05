@@ -2,44 +2,64 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "docker.io/biprajit1999/mlops_assignment"
+        // Docker binary path (macOS)
+        PATH_DOCKER = "/usr/local/bin"
+
+        // App / Image details
+        DOCKER_IMAGE = "biprajit1999/mlops_assignment"
         DOCKER_TAG = "latest"
         CONTAINER_NAME = "mlops_assignment"
         APP_PORT = "5007"
+
+        // Jenkins credentials ID for Docker Hub
         DOCKER_CREDENTIALS_ID = "DockerHub"
     }
 
     stages {
 
-        stage('Checkout Code') {
+        stage("Checkout Code") {
             steps {
+                echo "Cloning GitHub repository"
                 git branch: 'master',
                     url: 'https://github.com/biprajit1999/mlops_assignment_grp123'
             }
         }
-        
 
-        stage('Build Docker Image') {
+        stage("Build Docker Image") {
             steps {
-                script {
-                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                echo "Building Docker image"
+                withEnv(["PATH=$PATH:$PATH_DOCKER"]) {
+                    sh """
+                    docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                    """
                 }
             }
         }
 
-        stage('Push Image to Docker Hub') {
+        stage("Push Image to Docker Hub") {
             steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
-                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
+                echo "Pushing image to Docker Hub"
+                withEnv(["PATH=$PATH:$PATH_DOCKER"]) {
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: DOCKER_CREDENTIALS_ID,
+                            usernameVariable: 'DOCKER_USER',
+                            passwordVariable: 'DOCKER_PASS'
+                        )
+                    ]) {
+                        sh """
+                        docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+                        docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                        """
                     }
                 }
             }
         }
 
-        stage('Deploy to Local Docker (CD)') {
+        stage("Deploy to Local Docker (CD)") {
             steps {
-                script {
+                echo "Deploying container locally"
+                withEnv(["PATH=$PATH:$PATH_DOCKER"]) {
                     sh """
                     docker stop ${CONTAINER_NAME} || true
                     docker rm ${CONTAINER_NAME} || true
@@ -58,10 +78,16 @@ pipeline {
 
     post {
         success {
-            echo "Deployment successful 🚀"
+            echo "✅ CI/CD Pipeline completed successfully 🚀"
         }
         failure {
-            echo "Pipeline failed ❌"
+            echo "❌ CI/CD Pipeline failed"
+        }
+        always {
+            echo "Cleaning up unused Docker images"
+            withEnv(["PATH=$PATH:$PATH_DOCKER"]) {
+                sh "docker image prune -f || true"
+            }
         }
     }
 }
