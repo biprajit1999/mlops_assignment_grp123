@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Disease Risk Predictor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #ff5858;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .content { padding: 30px; }
+        .grid-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .form-group { margin-bottom: 15px; }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #444;
+            font-size: 0.9em;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            grid-column: span 2;
+            padding: 15px;
+            background: #ff5858;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover { background: #e04e4e; }
+        .result-box {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+        .safe { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>❤️ Heart Disease Risk Predictor</h1>
+            <p>Enter patient vitals for ML-based assessment</p>
+        </div>
+        <div class="content">
+            <form id="healthForm" onsubmit="predictHealth(event)">
+                <div class="grid-form">
+                    <div class="form-group">
+                        <label>Age</label>
+                        <input type="number" id="age" required value="55">
+                    </div>
+                    <div class="form-group">
+                        <label>Sex</label>
+                        <select id="sex">
+                            <option value="1">Male</option>
+                            <option value="0">Female</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Chest Pain Type (0-3)</label>
+                        <select id="cp">
+                            <option value="0">Typical Angina</option>
+                            <option value="1">Atypical Angina</option>
+                            <option value="2">Non-anginal Pain</option>
+                            <option value="3">Asymptomatic</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Resting Blood Pressure (mm Hg)</label>
+                        <input type="number" id="trestbps" required value="130">
+                    </div>
+                    <div class="form-group">
+                        <label>Cholesterol (mg/dl)</label>
+                        <input type="number" id="chol" required value="240">
+                    </div>
+                    <div class="form-group">
+                        <label>Fasting Blood Sugar > 120 mg/dl</label>
+                        <select id="fbs">
+                            <option value="0">False</option>
+                            <option value="1">True</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Resting ECG</label>
+                        <select id="restecg">
+                            <option value="0">Normal</option>
+                            <option value="1">ST-T Wave Abnormality</option>
+                            <option value="2">Left Ventricular Hypertrophy</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Max Heart Rate</label>
+                        <input type="number" id="thalach" required value="150">
+                    </div>
+                    <div class="form-group">
+                        <label>Exercise Induced Angina</label>
+                        <select id="exang">
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>ST Depression (Oldpeak)</label>
+                        <input type="number" step="0.1" id="oldpeak" value="1.0">
+                    </div>
+                    <div class="form-group">
+                        <label>Slope of ST Segment</label>
+                        <select id="slope">
+                            <option value="0">Upsloping</option>
+                            <option value="1">Flat</option>
+                            <option value="2">Downsloping</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Major Vessels Colored by Fluoroscopy (0-3)</label>
+                        <input type="number" id="ca" min="0" max="3" value="0">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Thalassemia</label>
+                        <select id="thal">
+                            <option value="1">Normal</option>
+                            <option value="2">Fixed Defect</option>
+                            <option value="3">Reversable Defect</option>
+                        </select>
+                    </div>
+                    <button type="submit" id="btnPredict">Analyze Risk</button>
+                </div>
+            </form>
+
+            <div id="resultBox" class="result-box">
+                <h2 id="resultTitle"></h2>
+                <p id="resultConf"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function predictHealth(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnPredict');
+            const resultBox = document.getElementById('resultBox');
+            
+            btn.textContent = "Analyzing...";
+            btn.disabled = true;
+
+            // Collect Data
+            const data = {
+                age: parseFloat(document.getElementById('age').value),
+                sex: parseFloat(document.getElementById('sex').value),
+                cp: parseFloat(document.getElementById('cp').value),
+                trestbps: parseFloat(document.getElementById('trestbps').value),
+                chol: parseFloat(document.getElementById('chol').value),
+                fbs: parseFloat(document.getElementById('fbs').value),
+                restecg: parseFloat(document.getElementById('restecg').value),
+                thalach: parseFloat(document.getElementById('thalach').value),
+                exang: parseFloat(document.getElementById('exang').value),
+                oldpeak: parseFloat(document.getElementById('oldpeak').value),
+                slope: parseFloat(document.getElementById('slope').value),
+                ca: parseFloat(document.getElementById('ca').value),
+                thal: parseFloat(document.getElementById('thal').value)
+            };
+
+            try {
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const res = await response.json();
+                
+                resultBox.style.display = 'block';
+                const confidence = (res.result.confidence * 100).toFixed(1);
+                
+                if(res.result.prediction === 1) {
+                    resultBox.className = 'result-box danger';
+                    document.getElementById('resultTitle').textContent = "⚠️ High Risk Detected";
+                } else {
+                    resultBox.className = 'result-box safe';
+                    document.getElementById('resultTitle').textContent = "✅ Low Risk Detected";
+                }
+                document.getElementById('resultConf').textContent = `Model Confidence: ${confidence}%`;
+
+            } catch (error) {
+                alert("Error calling API");
+                console.error(error);
+            } finally {
+                btn.textContent = "Analyze Risk";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

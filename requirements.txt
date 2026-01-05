@@ -1,0 +1,48 @@
+# flask==3.0.0
+# flask-cors==4.0.0
+# pandas==2.1.2
+# numpy==1.26.4
+# scikit-learn==1.5.1
+# joblib==1.4.2
+# mlflow==2.5.0
+# matplotlib==3.8.1
+# seaborn==0.12.2
+
+# Optional (for uploading models to HF or advanced usage)
+# transformers==4.35.0
+# huggingface_hub==0.16.4
+# # scikit-learn==1.5.1
+
+
+# flask==3.0.0
+# flask-cors==4.0.0
+# scikit-learn==1.2.2
+# pandas
+# numpy
+# joblib
+# mlflow
+# gunicorn
+
+
+# Core runtime
+python-dotenv==1.2.1
+
+# Web server
+Flask==2.3.3
+Flask-Cors==4.0.0
+gunicorn==23.0.0
+Werkzeug==3.1.4
+
+# ML stack (PINNED for ABI safety)
+numpy==1.23.5
+scikit-learn==1.2.2
+scipy==1.15.3
+joblib==1.2.0
+pandas==2.3.3
+
+# Experiment tracking (if used in app)
+mlflow==3.8.1
+
+# Utilities
+requests==2.32.5
+prometheus-client==0.20.0

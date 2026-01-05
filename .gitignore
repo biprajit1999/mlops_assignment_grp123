@@ -1,0 +1,26 @@
+# Virtual environments
+venv/
+venv311/
+.env/
+.envrc
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS files
+.DS_Store
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Docker
+*.tar
+VisualStudio/
