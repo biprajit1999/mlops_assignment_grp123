@@ -25,6 +25,40 @@ pipeline {
             }
         }
 
+        /* ===================== NEW STAGE ===================== */
+        stage("Setup Python Environment") {
+            steps {
+                echo "Setting up Python environment"
+                sh """
+                python3 --version
+                python3 -m pip install --upgrade pip
+                pip install -r requirements.txt
+                pip install pytest flake8
+                """
+            }
+        }
+
+        /* ===================== NEW STAGE ===================== */
+        stage("Linting (Code Quality Check)") {
+            steps {
+                echo "Running flake8 linting"
+                sh """
+                flake8 . --exclude=venv,__pycache__ --max-line-length=100 || true
+                """
+            }
+        }
+
+        /* ===================== NEW STAGE ===================== */
+        stage("Unit Tests (Pytest)") {
+            steps {
+                echo "Running unit tests"
+                sh """
+                pytest tests/ --junitxml=reports/unit_test_report.xml
+                """
+            }
+        }
+
+        /* ===================== NEW STAGE ===================== */
         stage("Build Docker Image") {
             steps {
                 echo "Building Docker image"
@@ -84,6 +118,9 @@ pipeline {
             echo "❌ CI/CD Pipeline failed"
         }
         always {
+            echo "Archiving test reports"
+            archiveArtifacts artifacts: 'reports/*.xml', allowEmptyArchive: true
+
             echo "Cleaning up unused Docker images"
             withEnv(["PATH=$PATH:$PATH_DOCKER"]) {
                 sh "docker image prune -f || true"
